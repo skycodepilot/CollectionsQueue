@@ -1,0 +1,13 @@
+# .NET ignores
+bin/
+obj/
+.vscode/
+
+# Node ignores
+node_modules/
+dist/
+.env
+
+# OS ignores
+.DS_Store
+Thumbs.db

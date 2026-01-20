@@ -1,62 +1,92 @@
 # Collections Queue Dashboard (PoC)
 
-A "Vertical Slice" Proof-of-Concept for a high-volume financial collections system. This project demonstrates a full-stack implementation of a prioritized work queue, focusing on performance, data integrity, and optimistic UI patterns.
+![Status](https://img.shields.io/badge/status-vertical%20slice-success.svg) ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
+A full-stack **"Vertical Slice" Proof-of-Concept** for a high-volume financial collections system.
+
+This project demonstrates a prioritized work queue focusing on **SQL performance (SARGable queries)**, **data integrity**, and **Optimistic UI patterns**. It was built to solve the specific problem of "delinquency interception" by reducing agent cognitive load and dashboard latency.
+
+## 📸 The Vertical Slice
+
+| **The UI (React 19)** | **The API (Swagger/OpenAPI)** |
+|:---:|:---:|
+| ![React Dashboard](docs/dashboard-preview.png) | ![API Swagger](docs/swagger-preview.png) |
+| *Optimistic updates with "Undo" safety net* | *Minimal API with Dapper & SQL Server* |
+
+---
 
 ## 🏗 Tech Stack & Architecture
 
 * **Database:** MS SQL Server 2022 (Dockerized)
 * **API:** .NET 9 Web API (Minimal API pattern)
-* **ORM:** Dapper (Micro-ORM for high-performance raw SQL execution)
+* **ORM:** Dapper (Micro-ORM for raw SQL performance)
 * **Frontend:** React 19 + TypeScript (Vite)
-* **State Management:** React Hooks + Optimistic UI updates
+* **State:** React Hooks + Optimistic UI updates
 
-## 🚀 Key Features & Interview Talking Points
+## 🚀 Key Features & Engineering Decisions
 
 ### 1. Performance-First SQL (SARGable Queries)
-The core logic resides in the `sp_GetPriorityQueue` stored procedure. 
-* **Optimization:** Instead of using functions like `DATEDIFF` on table columns (which kills index usage), the query calculates the `@CutoffDate` variable *before* the lookup.
-* **Result:** This ensures the SQL engine performs an **Index Seek** rather than a full Table Scan, essential for scaling to millions of debtor records.
+The core logic resides in `sp_GetPriorityQueue`.
+* **The Problem:** Typical `DATEDIFF` functions in `WHERE` clauses force full table scans.
+* **The Fix:** I calculate the `@CutoffDate` variable *before* the lookup.
+* **The Result:** The SQL engine performs an **Index Seek**, allowing the system to scale to millions of records without latency.
 
 ### 2. Vertical Slice Architecture
-The application is not built in horizontal layers (all generic Repositories, then all Services). It is built in vertical slices per feature. 
+Instead of generic "Repository" and "Service" layers that create horizontal coupling, this app is built in **Vertical Slices**:
 * **Read Slice:** `GET /api/queue` → Dapper Query → SQL Stored Proc
-* **Write Slice:** `POST /api/queue/{id}/log` → Dapper Command → Parametrized SQL Insert
+* **Write Slice:** `POST /api/queue/{id}/log` → Dapper Command → Parametrized SQL
 
 ### 3. Optimistic UI & Error Recovery
-The React frontend implements the "Work Queue" pattern.
-* **Instant Feedback:** When an agent logs a call, the item is removed from the UI *immediately* (Optimistic Update) without waiting for the server round-trip.
-* **Safety Net:** An "Undo" Toast notification allows the agent to recover the item in case of accidental clicks, restoring the view state without refreshing the data.
+* **Instant Feedback:** The moment an agent logs a call, the item vanishes from the queue (client-side filter).
+* **Safety Net:** An "Undo" Toast notification allows recovery from accidental clicks without a page reload.
+
+---
+
+## 📂 Project Structure
+
+    CollectionsQueue-PoC/
+    ├── api/                  # .NET 9 Backend
+    │   ├── CollectionsApi/   # Web API Project
+    │   └── sql/              # Database Setup Scripts (Schema & Seeds)
+    ├── ui/                   # React 19 Frontend
+    │   └── collections-ui/   # Vite Project
+    └── docs/                 # Screenshots and documentation
+
+---
 
 ## 🛠 How to Run Locally
 
 ### Prerequisites
-* Docker
+* Docker Desktop
 * .NET 9 SDK
 * Node.js (LTS)
 
 ### 1. Database Setup
+First, spin up the SQL Server container.
+*(Note: You can change the password below, but ensure you update `appsettings.json` in the API project to match.)*
 
-    # Configuration
-    The appsettings.json file contains a placeholder connection string. Update Password=YOUR_PASSWORD_HERE with your local SQL Server password before running.
-
-    # Spin up the container
     docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=YOUR_PASSWORD_HERE" -p 1433:1433 --name sql_server_dev -d mcr.microsoft.com/mssql/server:2022-latest
 
-    # (See the Configuration section above for context on the password in the connection string)
-
-    # Connect via Azure Data Studio and run the setup scripts in /sql (if provided) or manually seed data.
+Once running, connect via **Azure Data Studio** (or SSMS) and execute the `setup.sql` script located in `api/sql/setup.sql`.
 
 ### 2. API Setup
+Navigate to the API folder and start the server.
 
-    # Navigate to the nested project folder
     cd api/CollectionsApi
     dotnet run
-    # API will be available at http://localhost:5196
+
+* **Swagger UI:** [http://localhost:5196/swagger](http://localhost:5196/swagger)
+* **Configuration:** If you changed the SQL password, update `appsettings.json` before running.
 
 ### 3. Frontend Setup
+In a new terminal, navigate to the UI folder.
 
-    # Navigate to the nested project folder
     cd ui/collections-ui
     npm install
     npm run dev
-    # UI will be available at http://localhost:5173
+
+* **Dashboard:** [http://localhost:5173](http://localhost:5173)
+
+---
+
+*This project is a portfolio demonstration of full-stack architectural patterns.*

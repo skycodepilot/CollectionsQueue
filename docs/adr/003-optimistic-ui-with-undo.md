@@ -17,7 +17,7 @@ We implemented **Optimistic UI Updates** in the React frontend. When an agent sa
 2. **Safety Net:** A "Toast" notification appears with an **Undo** action.
 3. **Background Sync:** The API request (`POST /api/queue/{id}/log`) is sent in the background.
 
-If the "Undo" is clicked, the record is restored to the local list. **NOTE:** this feature is *demonstrated* in this POC; see **Consequnces** section below for details. (A vertical-slice implementation of a "Delete Last Log" action has yet to be added.)
+If the "Undo" is clicked, the record is restored to the local list. **NOTE:** this feature is *demonstrated* in this POC; see **Consequences** section below for details. (A vertical-slice implementation of a "Delete Last Log" action has yet to be added.)
 
 ## Consequences
 - **Pros:** "Instant" perceived performance; reduced cognitive load for the agent; allows for a rapid-fire workflow.
